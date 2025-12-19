@@ -213,7 +213,6 @@ def main():
     )
     
     st.title(" AI Weather Chatbot")
-    st.markdown("*Powered by Groq (Llama 3.1) & OpenWeatherMap*")
     
     if not os.getenv("GROQ_API_KEY") or not OPENWEATHER_API_KEY:
         st.error("API keys not found! Please set up your `.env` file with GROQ_API_KEY and OPENWEATHER_API_KEY")
