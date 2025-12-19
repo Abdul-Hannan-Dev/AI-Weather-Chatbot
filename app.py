@@ -209,7 +209,6 @@ def main():
     """Main Streamlit application"""
     st.set_page_config(
         page_title="AI Weather Chatbot",
-        # page_icon="🌤️",
         layout="centered"
     )
     
@@ -244,15 +243,6 @@ def main():
     
     # Sidebar with information
     with st.sidebar:
-        st.header("About")
-        st.markdown("""
-        This chatbot uses:
-        - **Groq API** with Llama 3.1 70B model
-        - **OpenWeatherMap API** for weather data
-        - **Streamlit** for the interface
-        
-        The chatbot has a mandatory system prompt and weather lookup tools.
-        """)
         
         st.header("Try asking:")
         st.markdown("""
