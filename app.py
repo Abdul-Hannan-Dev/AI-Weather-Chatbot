@@ -40,21 +40,12 @@ TOOLS = [
 
 
 def get_weather(city: str) -> dict:
-    """
-    Fetch weather data from OpenWeatherMap API
-    
-    Args:
-        city: Name of the city
-        
-    Returns:
-        Dictionary with weather information or error message
-    """
     try:
         url = f"http://api.openweathermap.org/data/2.5/weather"
         params = {
             "q": city,
             "appid": OPENWEATHER_API_KEY,
-            "units": "metric"  # Use Celsius
+            "units": "metric"
         }
         
         response = requests.get(url, params=params)
@@ -87,15 +78,6 @@ def get_weather(city: str) -> dict:
 
 
 def execute_tool_call(tool_call):
-    """
-    Execute the requested tool call
-    
-    Args:
-        tool_call: Tool call object from Groq API
-        
-    Returns:
-        JSON string with tool execution results
-    """
     function_name = tool_call.function.name
     arguments = json.loads(tool_call.function.arguments)
     
@@ -118,15 +100,6 @@ def execute_tool_call(tool_call):
 
 
 def chat_with_groq(user_message: str) -> str:
-    """
-    Send message to Groq API with tool calling support
-    
-    Args:
-        user_message: User's input message
-        
-    Returns:
-        Assistant's response
-    """
     st.session_state.messages.append({
         "role": "user",
         "content": user_message
@@ -206,7 +179,6 @@ def chat_with_groq(user_message: str) -> str:
 
 
 def main():
-    """Main Streamlit application"""
     st.set_page_config(
         page_title="AI Weather Chatbot",
         layout="centered"
@@ -215,8 +187,7 @@ def main():
     st.title(" AI Weather Chatbot")
     
     if not os.getenv("GROQ_API_KEY") or not OPENWEATHER_API_KEY:
-        st.error("API keys not found! Please set up your `.env` file with GROQ_API_KEY and OPENWEATHER_API_KEY")
-        st.info("Copy `.env.example` to `.env` and add your API keys")
+        st.error("A backend error has occured!")
         st.stop()
     
     if "messages" not in st.session_state:
@@ -234,13 +205,11 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Get and display assistant response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
                 response = chat_with_groq(prompt)
                 st.markdown(response)
     
-    # Sidebar with information
     with st.sidebar:
         
         st.header("Try asking:")
