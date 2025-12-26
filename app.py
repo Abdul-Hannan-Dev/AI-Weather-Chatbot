@@ -206,9 +206,14 @@ def main():
             st.markdown(prompt)
         
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                response = chat_with_groq(prompt)
-                st.markdown(response)
+                with st.spinner("Thinking..."):
+                    response = chat_with_groq(prompt)
+                placeholder=st.empty()
+                full_response=''
+                for i in response:
+                    full_response+=i
+                    placeholder.text(f'{full_response}▌')
+                    time.sleep(0.01)
     
     with st.sidebar:
         
