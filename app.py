@@ -11,6 +11,8 @@ load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
+GROQ_MODEL = "openai/gpt-oss-120b"
+
 SYSTEM_PROMPT = """You are a helpful AI assistant with access to weather information.
 You can look up current weather conditions for any city in the world.
 
@@ -111,18 +113,26 @@ def chat_with_groq(user_message: str) -> str:
     ] + st.session_state.messages
     
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=api_messages,
-            tools=TOOLS,
-            tool_choice="auto",
-            max_tokens=1024,
-            temperature=0.7
-        )
-        
-        response_message = response.choices[0].message
-        
-        if response_message.tool_calls:
+        final_message = None
+        max_tool_rounds = 5  # the model may call tools several times (e.g. one per city)
+
+        for _ in range(max_tool_rounds):
+            response = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=api_messages,
+                tools=TOOLS,
+                tool_choice="auto",
+                max_tokens=1024,
+                temperature=0.7
+            )
+
+            response_message = response.choices[0].message
+
+            # No more tool calls: this is the final answer
+            if not response_message.tool_calls:
+                final_message = response_message.content
+                break
+
             st.session_state.messages.append({
                 "role": "assistant",
                 "content": response_message.content or "",
@@ -137,32 +147,24 @@ def chat_with_groq(user_message: str) -> str:
                     } for tc in response_message.tool_calls
                 ]
             })
-            
+
             for tool_call in response_message.tool_calls:
                 tool_result = execute_tool_call(tool_call)
-                
+
                 st.session_state.messages.append({
                     "role": "tool",
                     "tool_call_id": tool_call.id,
                     "content": tool_result
                 })
-            
+
             api_messages = [
                 {"role": "system", "content": SYSTEM_PROMPT}
             ] + st.session_state.messages
-            
-            final_response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=api_messages,
-                max_tokens=1024,
-                temperature=0.7
-            )
-            
-            final_message = final_response.choices[0].message.content
-            
-        else:
-            final_message = response_message.content
-        
+
+        if final_message is None:
+            final_message = "Sorry, I couldn't complete that request. Please try again."
+
+
         st.session_state.messages.append({
             "role": "assistant",
             "content": final_message
@@ -185,7 +187,7 @@ def main():
         layout="centered"
     )
     
-    st.title(" AI Weather Chatbot")
+    st.title("AI Weather Chatbot")
     
     if not os.getenv("GROQ_API_KEY") or not OPENWEATHER_API_KEY:
         st.error("A backend error has occured!")
@@ -199,6 +201,9 @@ def main():
             with st.chat_message("user"):
                 st.markdown(message["content"])
         elif message["role"] == "assistant":
+            # Skip the internal tool-call turns (they have no text to show)
+            if message.get("tool_calls") or not message.get("content"):
+                continue
             with st.chat_message("assistant"):
                 st.markdown(message["content"])
     
